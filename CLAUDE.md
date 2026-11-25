@@ -27,6 +27,7 @@ Exclus : Lombok, Docker, React, JWT, microservices, dépendances superflues. Ne 
 - Indentation par tabulations, injection par constructeur dans le code de production.
 - Dépendances : `controller` → `service` → `repository` → `entity`. Pas de logique métier dans les contrôleurs, pas d'entité exposée en REST (passer par `dto`).
 - Pas de classe créée seulement pour remplir un package.
+- Les services renvoient des DTO, jamais d'entité, et passent par `TicketService` pour tout changement de statut ou de relation d'un ticket (règles dans `docs/architecture.md`).
 
 ## Modèle JPA
 

@@ -5,7 +5,7 @@ HelpDesk Pro est une application de gestion des incidents informatiques, réalis
 
 ## État actuel
 
-Le socle technique et le modèle de données sont en place : cinq entités JPA, leurs relations, les repositories et la persistance H2. **Les écrans, l'API REST et les règles métier ne sont pas encore développés** : `http://localhost:8080/` répond donc 404. Le suivi détaillé est dans [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
+Le socle technique, le modèle de données et la couche Service (CRUD, recherche, règles métier, délais de résolution) sont en place. **Les écrans et l'API REST ne sont pas encore développés** : `http://localhost:8080/` répond donc 404. Le suivi détaillé est dans [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
 
 ## Stack
 
