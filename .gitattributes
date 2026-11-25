@@ -1,0 +1,9 @@
+* text=auto
+
+# Maven Wrapper: each launcher must keep the line endings of its own shell
+/mvnw text eol=lf
+*.sh text eol=lf
+*.cmd text eol=crlf
+
+# H2 database files must never be altered by line-ending conversion
+*.mv.db binary
