@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/* HelpDesk Pro mark: an H whose crossbar is a pulse line */-->
+<img th:fragment="logo" class="hp-logo" th:src="@{/img/logo.svg}" alt="" width="40" height="40">
+
+<!--/* Colored status and priority badges, labels come from messages.properties */-->
+<span th:fragment="status(value)" class="hp-badge" th:classappend="'hp-status-' + ${value}"
+	th:text="#{'ticket.status.' + ${value}}">Statut</span>
+
+<span th:fragment="priority(value)" class="hp-badge" th:classappend="'hp-priority-' + ${value}"
+	th:text="#{'ticket.priority.' + ${value}}">Priorité</span>
+
+<!--/* Due date with the overdue or on-time verdict of a TicketResponse */-->
+<span th:fragment="due(ticket)">
+	<span th:text="${#temporals.format(ticket.dueAt(), 'dd/MM/yyyy HH:mm')}">01/01/2026 10:00</span>
+	<span class="hp-badge hp-overdue ms-1" th:if="${ticket.overdue()}"><i class="bi bi-alarm"></i> En retard</span>
+	<span class="hp-badge hp-ontime ms-1" th:if="${ticket.resolvedWithinTarget() == true}"><i class="bi bi-check2"></i>
+		Délai respecté</span>
+	<span class="hp-badge hp-overdue ms-1" th:if="${ticket.resolvedWithinTarget() == false}"><i class="bi bi-x"></i>
+		Délai dépassé</span>
+</span>
+
+<!--/* Empty state of a list */-->
+<div th:fragment="empty(icon, message)" class="hp-empty">
+	<i class="bi" th:classappend="${icon}"></i>
+	<span th:text="${message}">Aucun élément.</span>
+</div>
+
+<!--/* Submit button of a deletion, confirmed by helpdesk.js */-->
+<form th:fragment="deleteForm(action, message)" th:action="${action}" method="post" th:attr="data-confirm=${message}"
+	class="d-inline">
+	<button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</button>
+</form>
+
+</body>
+</html>

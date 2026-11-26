@@ -5,7 +5,7 @@ HelpDesk Pro est une application de gestion des incidents informatiques, réalis
 
 ## État actuel
 
-Le socle technique, le modèle de données et la couche Service (CRUD, recherche, règles métier, délais de résolution) sont en place. **Les écrans et l'API REST ne sont pas encore développés** : `http://localhost:8080/` répond donc 404. Le suivi détaillé est dans [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
+Le socle technique, le modèle de données, la couche Service (CRUD, recherche, règles métier, délais de résolution) et l'interface web (Spring MVC, Thymeleaf, Bootstrap 5) sont en place : `http://localhost:8080/` affiche le tableau de bord. **L'API REST et la collection Bruno ne sont pas encore développées.** Le suivi détaillé est dans [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
 
 ## Stack
 
@@ -17,7 +17,7 @@ Le socle technique, le modèle de données et la couche Service (CRUD, recherche
 | H2 | 2.5.252 |
 | Maven (via Maven Wrapper) | 3.10.1 |
 
-Prévus : Bootstrap 5 et Bruno.
+Bootstrap 5.3.3 et Bootstrap Icons 1.11.3 sont fournis localement (`src/main/resources/static/vendor/`, licences MIT incluses) : l'interface fonctionne sans Internet. Prévu : Bruno.
 
 ## Prérequis
 
@@ -38,6 +38,24 @@ Sous Linux ou macOS :
 ```
 
 L'application écoute sur le port 8080. Ctrl+C l'arrête proprement.
+
+## Interface web
+
+L'interface est entièrement en français, dotée d'une identité propre (thème sombre par défaut, thème clair mémorisé, palette de commandes Ctrl+K, tableau de bord Bento, Kanban) et responsive. Elle fonctionne hors ligne.
+
+| Route | Contenu |
+|---|---|
+| `/` | Tableau de bord : compteurs réels, répartitions par statut et priorité, incidents récents, interventions urgentes |
+| `/tickets` | Liste, recherche et filtres (statut, priorité, technicien, catégorie, tag, retards) |
+| `/tickets/board` | Kanban : une colonne par statut, avec l'étape suivante autorisée sur chaque carte |
+| `/tickets/new`, `/tickets/{id}`, `/tickets/{id}/edit` | Création, fiche détaillée (statut, solution, échéance, technicien, catégorie, tags), modification |
+| `/technicians`, `/technicians/{id}` | Techniciens : CRUD, recherche, filtre actif/inactif, activation, tickets associés, profil |
+| `/technicians/{id}/profile/new`, `/technicians/{id}/profile/edit` | Création et modification du profil |
+| `/profiles` | Liste et recherche des profils |
+| `/categories`, `/categories/{id}` | Catégories : CRUD, recherche, tickets associés (ajout et retrait) |
+| `/tags`, `/tags/{id}` | Tags : CRUD, recherche, tickets associés (ajout et retrait) |
+
+Toute modification passe par un `POST` suivi d'une redirection (Post/Redirect/Get) ; les suppressions demandent une confirmation. Les actions refusées par une règle métier renvoient à la page d'origine avec un message explicite.
 
 ## Tests et construction
 

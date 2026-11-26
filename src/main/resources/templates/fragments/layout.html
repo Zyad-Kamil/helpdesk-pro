@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark" xmlns:th="http://www.thymeleaf.org"
+	th:fragment="layout(title, active, content)">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="color-scheme" content="dark light">
+	<title th:replace="${title}">HelpDesk Pro</title>
+	<link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+	<!-- Applies the saved theme before the first paint: dark by default -->
+	<script th:src="@{/js/theme.js}"></script>
+	<link rel="stylesheet" th:href="@{/vendor/bootstrap/css/bootstrap.min.css}">
+	<link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+	<link rel="stylesheet" th:href="@{/css/helpdesk.css}">
+</head>
+<body>
+	<a class="hp-skip" href="#contenu">Aller au contenu</a>
+
+	<div class="hp-app">
+		<aside class="hp-sidebar" id="hp-sidebar" aria-label="Menu principal">
+			<a class="hp-brand" th:href="@{/}" aria-label="HelpDesk Pro, tableau de bord">
+				<span th:replace="~{fragments/components :: logo}"></span>
+				<span>HelpDesk Pro<small>Support informatique</small></span>
+			</a>
+			<nav class="hp-nav" aria-label="Navigation principale">
+				<div class="hp-nav-title">Pilotage</div>
+				<a class="hp-nav-link" th:href="@{/}" th:classappend="${active == 'dashboard'} ? 'active'"
+					th:attr="aria-current=${active == 'dashboard'} ? 'page'">
+					<i class="bi bi-grid-1x2" aria-hidden="true"></i> Tableau de bord</a>
+				<a class="hp-nav-link" th:href="@{/tickets}" th:classappend="${active == 'tickets'} ? 'active'"
+					th:attr="aria-current=${active == 'tickets'} ? 'page'">
+					<i class="bi bi-ticket-perforated" aria-hidden="true"></i> Tickets</a>
+				<a class="hp-nav-link" th:href="@{/tickets/board}" th:classappend="${active == 'board'} ? 'active'"
+					th:attr="aria-current=${active == 'board'} ? 'page'">
+					<i class="bi bi-kanban" aria-hidden="true"></i> Kanban</a>
+				<div class="hp-nav-title">Équipe</div>
+				<a class="hp-nav-link" th:href="@{/technicians}" th:classappend="${active == 'technicians'} ? 'active'"
+					th:attr="aria-current=${active == 'technicians'} ? 'page'">
+					<i class="bi bi-people" aria-hidden="true"></i> Techniciens</a>
+				<a class="hp-nav-link" th:href="@{/profiles}" th:classappend="${active == 'profiles'} ? 'active'"
+					th:attr="aria-current=${active == 'profiles'} ? 'page'">
+					<i class="bi bi-person-vcard" aria-hidden="true"></i> Profils</a>
+				<div class="hp-nav-title">Organisation</div>
+				<a class="hp-nav-link" th:href="@{/categories}" th:classappend="${active == 'categories'} ? 'active'"
+					th:attr="aria-current=${active == 'categories'} ? 'page'">
+					<i class="bi bi-folder2-open" aria-hidden="true"></i> Catégories</a>
+				<a class="hp-nav-link" th:href="@{/tags}" th:classappend="${active == 'tags'} ? 'active'"
+					th:attr="aria-current=${active == 'tags'} ? 'page'">
+					<i class="bi bi-tags" aria-hidden="true"></i> Tags</a>
+			</nav>
+			<div class="hp-sidebar-foot">
+				<span>Commandes</span>
+				<span><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+			</div>
+		</aside>
+		<div class="hp-backdrop" id="hp-backdrop"></div>
+
+		<div class="hp-main">
+			<header class="hp-topbar">
+				<button class="hp-icon-btn hp-drawer-toggle" type="button" data-hp-drawer-open aria-expanded="false"
+					aria-controls="hp-sidebar" aria-label="Ouvrir le menu"><i class="bi bi-list" aria-hidden="true"></i></button>
+				<a class="hp-topbar-brand" th:href="@{/}">
+					<span th:replace="~{fragments/components :: logo}"></span> HelpDesk Pro</a>
+				<span class="flex-grow-1"></span>
+				<button class="hp-search-btn" type="button" data-hp-palette-open aria-haspopup="dialog"
+					aria-keyshortcuts="Control+K" aria-label="Ouvrir la palette de commandes">
+					<i class="bi bi-search" aria-hidden="true"></i>
+					<span class="hp-search-label">Rechercher ou aller à…</span>
+					<kbd class="d-none d-md-inline">Ctrl K</kbd>
+				</button>
+				<button class="hp-icon-btn" type="button" data-hp-theme-toggle aria-label="Changer de thème">
+					<i class="bi bi-sun hp-theme-sun" aria-hidden="true"></i>
+					<i class="bi bi-moon-stars hp-theme-moon" aria-hidden="true"></i>
+				</button>
+			</header>
+
+			<div class="hp-content" id="contenu" tabindex="-1">
+				<main th:replace="${content}">Contenu</main>
+			</div>
+		</div>
+	</div>
+
+	<!-- Command palette: every entry is a real route of the application -->
+	<dialog class="hp-palette" id="hp-palette" aria-label="Palette de commandes">
+		<div class="hp-palette-head">
+			<i class="bi bi-search" aria-hidden="true"></i>
+			<input id="hp-palette-input" type="text" role="combobox" aria-expanded="true" aria-controls="hp-palette-list"
+				aria-autocomplete="list" aria-label="Rechercher une page ou une action"
+				placeholder="Rechercher une page, une action, un ticket…" autocomplete="off" spellcheck="false">
+			<kbd>Échap</kbd>
+		</div>
+		<ul class="hp-palette-list" id="hp-palette-list" role="listbox" aria-label="Résultats">
+			<li class="hp-palette-group" role="presentation">Rechercher</li>
+			<li class="hp-palette-item" role="option" id="pal-search" data-label="" data-palette-search
+				th:attr="data-base=@{/tickets(keyword='')}" hidden>
+				<a th:href="@{/tickets}"><i class="bi bi-search" aria-hidden="true"></i>
+					<span>Rechercher « <span class="hp-palette-query"></span> » dans les tickets</span></a>
+			</li>
+			<li class="hp-palette-item" role="option" id="pal-goto" data-label="" data-palette-goto
+				th:attr="data-base=@{/tickets/}" hidden>
+				<a th:href="@{/tickets}"><i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+					<span>Ouvrir le ticket n°<span class="hp-palette-number"></span></span></a>
+			</li>
+
+			<li class="hp-palette-group" role="presentation">Aller à</li>
+			<li class="hp-palette-item" role="option" id="pal-1" data-label="tableau de bord accueil statistiques">
+				<a th:href="@{/}"><i class="bi bi-grid-1x2" aria-hidden="true"></i> Tableau de bord</a></li>
+			<li class="hp-palette-item" role="option" id="pal-2" data-label="tickets liste incidents">
+				<a th:href="@{/tickets}"><i class="bi bi-ticket-perforated" aria-hidden="true"></i> Tickets</a></li>
+			<li class="hp-palette-item" role="option" id="pal-3" data-label="kanban tableau colonnes statuts">
+				<a th:href="@{/tickets/board}"><i class="bi bi-kanban" aria-hidden="true"></i> Kanban des tickets</a></li>
+			<li class="hp-palette-item" role="option" id="pal-4" data-label="tickets en retard echeance depasse">
+				<a th:href="@{/tickets(overdue=true)}"><i class="bi bi-alarm" aria-hidden="true"></i> Tickets en retard</a></li>
+			<li class="hp-palette-item" role="option" id="pal-5" data-label="techniciens equipe">
+				<a th:href="@{/technicians}"><i class="bi bi-people" aria-hidden="true"></i> Techniciens</a></li>
+			<li class="hp-palette-item" role="option" id="pal-6" data-label="profils techniciens specialisation">
+				<a th:href="@{/profiles}"><i class="bi bi-person-vcard" aria-hidden="true"></i> Profils</a></li>
+			<li class="hp-palette-item" role="option" id="pal-7" data-label="categories">
+				<a th:href="@{/categories}"><i class="bi bi-folder2-open" aria-hidden="true"></i> Catégories</a></li>
+			<li class="hp-palette-item" role="option" id="pal-8" data-label="tags etiquettes">
+				<a th:href="@{/tags}"><i class="bi bi-tags" aria-hidden="true"></i> Tags</a></li>
+
+			<li class="hp-palette-group" role="presentation">Créer</li>
+			<li class="hp-palette-item" role="option" id="pal-9" data-label="nouveau ticket creer incident">
+				<a th:href="@{/tickets/new}"><i class="bi bi-plus-circle" aria-hidden="true"></i> Nouveau ticket</a></li>
+			<li class="hp-palette-item" role="option" id="pal-10" data-label="nouveau technicien creer">
+				<a th:href="@{/technicians/new}"><i class="bi bi-person-plus" aria-hidden="true"></i> Nouveau technicien</a></li>
+			<li class="hp-palette-item" role="option" id="pal-11" data-label="nouvelle categorie creer">
+				<a th:href="@{/categories/new}"><i class="bi bi-folder-plus" aria-hidden="true"></i> Nouvelle catégorie</a></li>
+			<li class="hp-palette-item" role="option" id="pal-12" data-label="nouveau tag creer etiquette">
+				<a th:href="@{/tags/new}"><i class="bi bi-tag" aria-hidden="true"></i> Nouveau tag</a></li>
+
+			<li class="hp-palette-group" role="presentation">Préférences</li>
+			<li class="hp-palette-item" role="option" id="pal-13" data-label="theme clair sombre apparence mode">
+				<button type="button" data-palette-action="theme"><i class="bi bi-circle-half" aria-hidden="true"></i>
+					Basculer entre thème clair et sombre</button></li>
+		</ul>
+		<p class="hp-palette-empty" id="hp-palette-empty" hidden>Aucun résultat pour cette recherche.</p>
+		<div class="hp-palette-foot">
+			<span><kbd>↑</kbd> <kbd>↓</kbd> naviguer</span>
+			<span><kbd>Entrée</kbd> ouvrir</span>
+			<span><kbd>Échap</kbd> fermer</span>
+		</div>
+	</dialog>
+
+	<!-- Notifications: live region filled by helpdesk.js from the flash messages below -->
+	<div class="hp-toasts" id="hp-toasts" role="region" aria-live="polite" aria-label="Notifications"></div>
+	<div class="hp-flash" th:if="${success}" data-kind="success" th:text="${success}" hidden></div>
+	<div class="hp-flash" th:if="${error}" data-kind="error" th:text="${error}" hidden></div>
+	<noscript>
+		<div style="position:fixed;bottom:1rem;right:1rem;left:1rem;z-index:2100">
+			<div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+			<div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+		</div>
+	</noscript>
+
+	<script th:src="@{/vendor/bootstrap/js/bootstrap.bundle.min.js}"></script>
+	<script th:src="@{/js/helpdesk.js}"></script>
+</body>
+</html>

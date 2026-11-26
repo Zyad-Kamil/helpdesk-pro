@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'board', ~{::main})}">
+<head>
+	<title>Kanban – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<div class="hp-eyebrow"><i class="bi bi-kanban" aria-hidden="true"></i> Vue par statut</div>
+			<h1>Kanban des tickets</h1>
+			<div class="hp-subtitle">Chaque action respecte le cycle de vie : un ticket avance d'un seul statut à la fois.</div>
+		</div>
+		<div class="hp-actions">
+			<div class="hp-segmented" role="group" aria-label="Mode d'affichage">
+				<a th:href="@{/tickets}"><i class="bi bi-list-ul" aria-hidden="true"></i> Liste</a>
+				<a th:href="@{/tickets/board}" aria-current="page"><i class="bi bi-kanban" aria-hidden="true"></i> Kanban</a>
+			</div>
+			<a class="btn btn-primary" th:href="@{/tickets/new}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nouveau ticket</a>
+		</div>
+	</div>
+
+	<form class="card hp-filters" th:action="@{/tickets/board}" method="get" role="search" aria-label="Filtrer le Kanban">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-6 col-xl-3">
+				<label class="form-label" for="keyword">Recherche</label>
+				<input class="form-control" id="keyword" name="keyword" type="search" th:value="${criteria.keyword()}"
+					placeholder="Titre, description, demandeur…">
+			</div>
+			<div class="col-6 col-xl-2">
+				<label class="form-label" for="priority">Priorité</label>
+				<select class="form-select" id="priority" name="priority">
+					<option value="">Toutes</option>
+					<option th:each="p : ${priorities}" th:value="${p}" th:text="#{'ticket.priority.' + ${p}}"
+						th:selected="${p == criteria.priority()}">Priorité</option>
+				</select>
+			</div>
+			<div class="col-6 col-xl-3">
+				<label class="form-label" for="technicianId">Technicien</label>
+				<select class="form-select" id="technicianId" name="technicianId">
+					<option value="">Tous</option>
+					<option th:each="t : ${technicians}" th:value="${t.id()}" th:text="${t.firstName() + ' ' + t.lastName()}"
+						th:selected="${t.id() == criteria.technicianId()}">Technicien</option>
+				</select>
+			</div>
+			<div class="col-6 col-xl-2">
+				<label class="form-label" for="categoryId">Catégorie</label>
+				<select class="form-select" id="categoryId" name="categoryId">
+					<option value="">Toutes</option>
+					<option th:each="c : ${categories}" th:value="${c.id()}" th:text="${c.name()}"
+						th:selected="${c.id() == criteria.categoryId()}">Catégorie</option>
+				</select>
+			</div>
+			<div class="col-12 col-xl-auto d-flex gap-2">
+				<button class="btn btn-primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrer</button>
+				<a class="btn btn-outline-secondary" th:href="@{/tickets/board}">Réinitialiser</a>
+			</div>
+		</div>
+	</form>
+
+	<div class="hp-board">
+		<section class="hp-col" th:each="entry : ${columns}" th:with="status=${entry.key}"
+			th:attr="aria-labelledby='col-' + ${status}">
+			<div class="hp-col-head" th:classappend="'hp-status-' + ${status}">
+				<span th:id="'col-' + ${status}" th:text="#{'ticket.status.' + ${status}}">Statut</span>
+				<span class="hp-col-count" th:text="${entry.value.size()}">0</span>
+			</div>
+			<div class="hp-col-body">
+				<p class="hp-col-empty" th:if="${entry.value.isEmpty()}">Aucun ticket dans cette colonne.</p>
+
+				<article class="hp-card" th:each="t : ${entry.value}" th:classappend="'hp-status-' + ${t.status()}">
+					<div class="d-flex justify-content-between align-items-start gap-2">
+						<span class="hp-mono hp-muted small" th:text="'n°' + ${t.id()}">n°1</span>
+						<span th:replace="~{fragments/components :: priority(${t.priority()})}"></span>
+					</div>
+					<a class="hp-card-title" th:href="@{/tickets/{id}(id=${t.id()})}" th:text="${t.title()}">Titre</a>
+					<div class="hp-card-meta">
+						<span th:if="${t.technicianName() != null}"><i class="bi bi-person" aria-hidden="true"></i>
+							<span th:text="${t.technicianName()}">Technicien</span></span>
+						<span th:if="${t.technicianName() == null}"><i class="bi bi-person-dash" aria-hidden="true"></i> Non affecté</span>
+						<span th:if="${t.categoryName() != null}"><i class="bi bi-folder2" aria-hidden="true"></i>
+							<span th:text="${t.categoryName()}">Catégorie</span></span>
+					</div>
+					<div class="hp-card-meta mt-2">
+						<span th:replace="~{fragments/components :: due(${t})}"></span>
+					</div>
+
+					<!-- Only the one allowed next step is offered, through the same service rules as the ticket page -->
+					<div class="hp-card-actions" th:if="${t.nextStatus() != null}">
+						<form th:if="${t.nextStatus().name() == 'IN_PROGRESS'}" th:action="@{/tickets/{id}/status(id=${t.id()})}"
+							method="post">
+							<input type="hidden" name="status" value="IN_PROGRESS">
+							<input type="hidden" name="from" value="board">
+							<button class="btn btn-sm btn-outline-primary" type="submit" th:disabled="${t.technicianId() == null}"
+								th:attr="title=${t.technicianId() == null} ? 'Affectez d’abord un technicien actif'">
+								<i class="bi bi-play-fill" aria-hidden="true"></i> <span th:text="#{ticket.status.action.IN_PROGRESS}">Démarrer</span></button>
+						</form>
+						<a th:if="${t.nextStatus().name() == 'RESOLVED'}" class="btn btn-sm btn-outline-primary"
+							th:href="@{/tickets/{id}(id=${t.id()})} + '#resolution'">
+							<i class="bi bi-check2-circle" aria-hidden="true"></i> Résoudre…</a>
+						<form th:if="${t.nextStatus().name() == 'CLOSED'}" th:action="@{/tickets/{id}/status(id=${t.id()})}"
+							method="post" th:attr="data-confirm=|Clôturer le ticket n°${t.id()} ? Il ne pourra plus être modifié.|">
+							<input type="hidden" name="status" value="CLOSED">
+							<input type="hidden" name="from" value="board">
+							<button class="btn btn-sm btn-outline-primary" type="submit">
+								<i class="bi bi-archive" aria-hidden="true"></i> <span th:text="#{ticket.status.action.CLOSED}">Clôturer</span></button>
+						</form>
+						<a class="btn btn-sm btn-outline-secondary" th:href="@{/tickets/{id}(id=${t.id()})}">Ouvrir</a>
+					</div>
+				</article>
+			</div>
+		</section>
+	</div>
+</main>
+</body>
+</html>

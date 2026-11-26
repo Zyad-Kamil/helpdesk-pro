@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'categories', ~{::main})}">
+<head>
+	<title>Catégories – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<h1>Catégories</h1>
+			<div class="hp-subtitle"><span th:text="${categories.size()}">0</span> catégorie(s)</div>
+		</div>
+		<a class="btn btn-primary" th:href="@{/categories/new}"><i class="bi bi-plus-lg"></i> Nouvelle catégorie</a>
+	</div>
+	<form class="card hp-filters" th:action="@{/categories}" method="get">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-9">
+				<label class="form-label" for="keyword">Recherche</label>
+				<input class="form-control" id="keyword" name="keyword" th:value="${keyword}" placeholder="Nom ou description">
+			</div>
+			<div class="col-md-3 d-flex gap-2">
+				<button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+				<a class="btn btn-outline-secondary" th:href="@{/categories}">Réinitialiser</a>
+			</div>
+		</div>
+	</form>
+	<div class="card">
+		<th:block th:if="${categories.isEmpty()}">
+			<div th:replace="~{fragments/components :: empty('bi-folder2-open', 'Aucune catégorie ne correspond à votre recherche.')}"></div>
+		</th:block>
+		<div class="table-responsive" th:unless="${categories.isEmpty()}">
+			<table class="table table-hover">
+				<thead><tr><th>Nom</th><th>Description</th><th></th></tr></thead>
+				<tbody>
+					<tr th:each="c : ${categories}">
+						<td><a class="hp-row-link" th:href="@{/categories/{id}(id=${c.id()})}" th:text="${c.name()}">Nom</a></td>
+						<td th:text="${c.description()} ?: '—'">—</td>
+						<td class="text-end text-nowrap">
+							<a class="btn btn-sm btn-outline-primary" th:href="@{/categories/{id}/edit(id=${c.id()})}">
+								<i class="bi bi-pencil"></i> Modifier</a>
+							<form th:replace="~{fragments/components :: deleteForm(@{/categories/{id}/delete(id=${c.id()})}, |Supprimer la catégorie « ${c.name()} » ?|)}"></form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'technicians', ~{::main})}">
+<head>
+	<title>Techniciens – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<h1>Techniciens</h1>
+			<div class="hp-subtitle"><span th:text="${technicians.size()}">0</span> technicien(s)</div>
+		</div>
+		<a class="btn btn-primary" th:href="@{/technicians/new}"><i class="bi bi-plus-lg"></i> Nouveau technicien</a>
+	</div>
+
+	<form class="card hp-filters" th:action="@{/technicians}" method="get">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-6">
+				<label class="form-label" for="keyword">Recherche</label>
+				<input class="form-control" id="keyword" name="keyword" th:value="${keyword}"
+					placeholder="Prénom, nom ou e-mail">
+			</div>
+			<div class="col-md-3">
+				<label class="form-label" for="active">Activité</label>
+				<select class="form-select" id="active" name="active">
+					<option value="">Tous</option>
+					<option value="true" th:selected="${active == true}">Actifs</option>
+					<option value="false" th:selected="${active == false}">Inactifs</option>
+				</select>
+			</div>
+			<div class="col-md-3 d-flex gap-2">
+				<button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Filtrer</button>
+				<a class="btn btn-outline-secondary" th:href="@{/technicians}">Réinitialiser</a>
+			</div>
+		</div>
+	</form>
+
+	<div class="card">
+		<th:block th:if="${technicians.isEmpty()}">
+			<div th:replace="~{fragments/components :: empty('bi-people', 'Aucun technicien ne correspond à votre recherche.')}"></div>
+		</th:block>
+		<div class="table-responsive" th:unless="${technicians.isEmpty()}">
+			<table class="table table-hover">
+				<thead><tr><th>Nom</th><th>E-mail</th><th>Statut</th><th>Profil</th></tr></thead>
+				<tbody>
+					<tr th:each="t : ${technicians}">
+						<td><a class="hp-row-link" th:href="@{/technicians/{id}(id=${t.id()})}"
+							th:text="${t.firstName() + ' ' + t.lastName()}">Nom</a></td>
+						<td th:text="${t.email()}">e-mail</td>
+						<td>
+							<span class="hp-badge hp-ontime" th:if="${t.active()}">Actif</span>
+							<span class="hp-badge hp-priority-LOW" th:unless="${t.active()}">Inactif</span>
+						</td>
+						<td th:text="${t.profile() != null ? (t.profile().specialization() ?: 'Profil renseigné') : '—'}">—</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</main>
+</body>
+</html>

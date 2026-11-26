@@ -5,9 +5,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.helpdeskpro.dto.TicketRequest;
@@ -43,10 +41,6 @@ import static com.helpdeskpro.service.TextNormalizer.text;
 @Validated
 @Transactional
 public class TicketService {
-
-	private static final Map<TicketStatus, TicketStatus> NEXT_STATUS = new EnumMap<>(
-			Map.of(TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED,
-					TicketStatus.RESOLVED, TicketStatus.CLOSED));
 
 	private static final Set<TicketStatus> ACTIVE = Set.of(TicketStatus.OPEN, TicketStatus.IN_PROGRESS);
 
@@ -121,6 +115,7 @@ public class TicketService {
 					criteria.categoryId(), criteria.tagId())
 			.stream()
 			.map(this::toResponse)
+			.filter((ticket) -> !Boolean.TRUE.equals(criteria.overdue()) || ticket.overdue())
 			.toList();
 	}
 
@@ -144,7 +139,7 @@ public class TicketService {
 	public TicketResponse changeStatus(Long id, @Valid TicketStatusRequest request) {
 		Ticket ticket = findModifiable(id);
 		TicketStatus target = request.status();
-		if (NEXT_STATUS.get(ticket.getStatus()) != target) {
+		if (ticket.getStatus().next() != target) {
 			throw new BusinessRuleException("Transition interdite pour le ticket " + id + " : " + ticket.getStatus()
 					+ " vers " + target + ".");
 		}

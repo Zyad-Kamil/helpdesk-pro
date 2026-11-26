@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'tickets', ~{::main})}">
+<head>
+	<title th:text="|Ticket n°${ticket.id()} – HelpDesk Pro|">Ticket – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<nav aria-label="Fil d'Ariane" class="mb-2 small">
+		<a th:href="@{/tickets}">Tickets</a> <span class="hp-muted">/ n°<span th:text="${ticket.id()}">1</span></span>
+	</nav>
+	<div class="hp-page-header">
+		<div>
+			<div class="hp-eyebrow"><i class="bi bi-ticket-perforated" aria-hidden="true"></i> Ticket <span class="hp-mono" th:text="'n°' + ${ticket.id()}">n°1</span></div>
+			<h1 th:text="${ticket.title()}">Titre du ticket</h1>
+			<div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+				<span th:replace="~{fragments/components :: status(${ticket.status()})}"></span>
+				<span th:replace="~{fragments/components :: priority(${ticket.priority()})}"></span>
+				<span class="hp-badge hp-overdue" th:if="${ticket.overdue()}"><i class="bi bi-alarm"></i> En retard</span>
+			</div>
+		</div>
+		<div class="hp-actions">
+			<a class="btn btn-outline-primary" th:if="${ticket.editable()}"
+				th:href="@{/tickets/{id}/edit(id=${ticket.id()})}"><i class="bi bi-pencil"></i> Modifier</a>
+			<form th:replace="~{fragments/components :: deleteForm(@{/tickets/{id}/delete(id=${ticket.id()})}, |Supprimer définitivement le ticket n°${ticket.id()} ? Le technicien, la catégorie et les tags sont conservés.|)}"></form>
+		</div>
+	</div>
+
+	<!-- Life cycle: only real dates are shown (creation, resolution) -->
+	<div class="card mb-3">
+		<div class="card-body pb-2">
+			<ol class="hp-steps mb-2" aria-label="Cycle de vie du ticket">
+				<li class="hp-step" th:each="s, it : ${statuses}"
+					th:with="cur=${ticket.status().ordinal()}, done=${it.index < ticket.status().ordinal() or ticket.status().name() == 'CLOSED'}, current=${it.index == ticket.status().ordinal() and ticket.status().name() != 'CLOSED'}"
+					th:classappend="${done} ? 'is-done' : (${current} ? 'is-current')"
+					th:attr="aria-current=${current} ? 'step'">
+					<span class="hp-step-dot">
+						<i class="bi bi-check-lg" aria-hidden="true" th:if="${done}"></i>
+						<span th:unless="${done}" th:text="${it.count}">1</span>
+					</span>
+					<span th:text="#{'ticket.status.' + ${s}}">Statut</span>
+					<small th:if="${s.name() == 'OPEN'}" th:text="${#temporals.format(ticket.createdAt(), 'dd/MM/yyyy HH:mm')}">date</small>
+					<small th:if="${s.name() == 'RESOLVED' and ticket.resolvedAt() != null}"
+						th:text="${#temporals.format(ticket.resolvedAt(), 'dd/MM/yyyy HH:mm')}">date</small>
+					<small th:if="${s.name() != 'OPEN' and !(s.name() == 'RESOLVED' and ticket.resolvedAt() != null)}">&nbsp;</small>
+				</li>
+			</ol>
+		</div>
+	</div>
+
+	<div class="row g-3">
+		<div class="col-xl-8">
+			<div class="card mb-3">
+				<div class="card-header">Description</div>
+				<div class="card-body">
+					<p class="hp-prewrap mb-0" th:text="${ticket.description()}">Description</p>
+				</div>
+			</div>
+
+			<div class="card mb-3" th:if="${ticket.resolution() != null}">
+				<div class="card-header"><i class="bi bi-check2-circle me-2 text-success"></i>Solution</div>
+				<div class="card-body">
+					<p class="hp-prewrap mb-0" th:text="${ticket.resolution()}">Solution</p>
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="card-header">Informations</div>
+				<div class="card-body">
+					<dl class="hp-dl row mb-0">
+						<div class="col-md-6">
+							<dt>Demandeur</dt>
+							<dd th:text="${ticket.requesterName()}">Nom</dd>
+						</div>
+						<div class="col-md-6">
+							<dt>E-mail du demandeur</dt>
+							<dd th:text="${ticket.requesterEmail()}">e-mail</dd>
+						</div>
+						<div class="col-md-6">
+							<dt>Créé le</dt>
+							<dd th:text="${#temporals.format(ticket.createdAt(), 'dd/MM/yyyy HH:mm')}">date</dd>
+						</div>
+						<div class="col-md-6">
+							<dt>Dernière modification</dt>
+							<dd th:text="${#temporals.format(ticket.updatedAt(), 'dd/MM/yyyy HH:mm')}">date</dd>
+						</div>
+						<div class="col-md-6">
+							<dt>Échéance</dt>
+							<dd><span th:replace="~{fragments/components :: due(${ticket})}"></span></dd>
+						</div>
+						<div class="col-md-6">
+							<dt>Résolu le</dt>
+							<dd th:text="${ticket.resolvedAt() != null} ? ${#temporals.format(ticket.resolvedAt(), 'dd/MM/yyyy HH:mm')} : '—'">—</dd>
+						</div>
+					</dl>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-xl-4">
+			<!-- Status -->
+			<div class="card mb-3">
+				<div class="card-header">Statut</div>
+				<div class="card-body">
+					<p class="mb-3" th:if="${ticket.nextStatus() == null}">
+						<i class="bi bi-lock"></i> Ticket clôturé : plus aucune modification n'est possible.</p>
+
+					<form th:if="${ticket.nextStatus() != null and ticket.nextStatus().name() == 'IN_PROGRESS'}"
+						th:action="@{/tickets/{id}/status(id=${ticket.id()})}" method="post">
+						<input type="hidden" name="status" value="IN_PROGRESS">
+						<p class="small hp-muted" th:if="${ticket.technicianId() == null}">
+							Affectez d'abord un technicien actif pour démarrer le traitement.</p>
+						<button class="btn btn-primary w-100" type="submit" th:disabled="${ticket.technicianId() == null}">
+							<i class="bi bi-play-fill"></i> <span th:text="#{ticket.status.action.IN_PROGRESS}">Démarrer</span></button>
+					</form>
+
+					<form th:if="${ticket.nextStatus() != null and ticket.nextStatus().name() == 'RESOLVED'}"
+						th:action="@{/tickets/{id}/status(id=${ticket.id()})}" method="post">
+						<input type="hidden" name="status" value="RESOLVED">
+						<label class="form-label hp-required" for="resolution">Solution apportée</label>
+						<textarea class="form-control mb-2" id="resolution" name="resolution" rows="4" maxlength="4000"
+							required></textarea>
+						<button class="btn btn-success w-100" type="submit">
+							<i class="bi bi-check2-circle"></i> <span th:text="#{ticket.status.action.RESOLVED}">Résoudre</span></button>
+					</form>
+
+					<form th:if="${ticket.nextStatus() != null and ticket.nextStatus().name() == 'CLOSED'}"
+						th:action="@{/tickets/{id}/status(id=${ticket.id()})}" method="post"
+						th:attr="data-confirm=|Clôturer le ticket n°${ticket.id()} ? Il ne pourra plus être modifié.|">
+						<input type="hidden" name="status" value="CLOSED">
+						<button class="btn btn-dark w-100" type="submit">
+							<i class="bi bi-archive"></i> <span th:text="#{ticket.status.action.CLOSED}">Clôturer</span></button>
+					</form>
+				</div>
+			</div>
+
+			<!-- Technician -->
+			<div class="card mb-3">
+				<div class="card-header">Technicien</div>
+				<div class="card-body">
+					<p class="mb-2">
+						<span th:if="${ticket.technicianId() != null}">
+							<i class="bi bi-person-badge"></i>
+							<a th:href="@{/technicians/{id}(id=${ticket.technicianId()})}" th:text="${ticket.technicianName()}">Nom</a>
+						</span>
+						<span class="hp-muted" th:if="${ticket.technicianId() == null}">Aucun technicien affecté</span>
+					</p>
+					<form th:if="${ticket.technicianChangeable() and !availableTechnicians.isEmpty()}"
+						th:action="@{/tickets/{id}/technician(id=${ticket.id()})}" method="post" class="mb-2">
+						<label class="form-label" for="technicianId"
+							th:text="${ticket.technicianId() == null} ? 'Affecter un technicien' : 'Réaffecter à'">Affecter</label>
+						<div class="input-group">
+							<select class="form-select" id="technicianId" name="technicianId" required>
+								<option th:each="t : ${availableTechnicians}" th:value="${t.id()}"
+									th:text="${t.firstName() + ' ' + t.lastName()}">Technicien</option>
+							</select>
+							<button class="btn btn-primary" type="submit">OK</button>
+						</div>
+					</form>
+					<p class="small hp-muted" th:if="${ticket.technicianChangeable() and availableTechnicians.isEmpty()}">
+						Aucun autre technicien actif disponible.</p>
+					<form th:if="${ticket.technicianRemovable()}"
+						th:action="@{/tickets/{id}/technician/remove(id=${ticket.id()})}" method="post"
+						th:attr="data-confirm='Retirer le technicien de ce ticket ?'">
+						<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-person-dash"></i>
+							Désaffecter</button>
+					</form>
+					<p class="small hp-muted mb-0" th:if="${!ticket.technicianChangeable()}">
+						L'affectation n'est plus modifiable pour un ticket résolu ou clôturé.</p>
+					<p class="small hp-muted mb-0"
+						th:if="${ticket.technicianChangeable() and ticket.technicianId() != null and !ticket.technicianRemovable()}">
+						La désaffectation n'est possible que pour un ticket ouvert ; vous pouvez réaffecter.</p>
+				</div>
+			</div>
+
+			<!-- Category -->
+			<div class="card mb-3">
+				<div class="card-header">Catégorie</div>
+				<div class="card-body">
+					<p class="mb-2">
+						<span th:if="${ticket.categoryId() != null}"><i class="bi bi-folder2-open"></i>
+							<a th:href="@{/categories/{id}(id=${ticket.categoryId()})}" th:text="${ticket.categoryName()}">Catégorie</a></span>
+						<span class="hp-muted" th:if="${ticket.categoryId() == null}">Aucune catégorie</span>
+					</p>
+					<th:block th:if="${ticket.editable()}">
+						<form th:if="${!availableCategories.isEmpty()}" th:action="@{/tickets/{id}/category(id=${ticket.id()})}"
+							method="post" class="mb-2">
+							<label class="form-label" for="categoryId"
+								th:text="${ticket.categoryId() == null} ? 'Associer une catégorie' : 'Changer de catégorie'">Catégorie</label>
+							<div class="input-group">
+								<select class="form-select" id="categoryId" name="categoryId" required>
+									<option th:each="c : ${availableCategories}" th:value="${c.id()}" th:text="${c.name()}">Catégorie</option>
+								</select>
+								<button class="btn btn-primary" type="submit">OK</button>
+							</div>
+						</form>
+						<form th:if="${ticket.categoryId() != null}"
+							th:action="@{/tickets/{id}/category/remove(id=${ticket.id()})}" method="post">
+							<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-x-lg"></i>
+								Retirer la catégorie</button>
+						</form>
+					</th:block>
+				</div>
+			</div>
+
+			<!-- Tags -->
+			<div class="card">
+				<div class="card-header">Tags</div>
+				<div class="card-body">
+					<p class="hp-muted" th:if="${ticket.tags().isEmpty()}">Aucun tag</p>
+					<div class="d-flex flex-wrap gap-2 mb-3">
+						<span th:each="g : ${ticket.tags()}" class="hp-badge hp-tone-violet">
+							<a class="text-reset text-decoration-none" th:href="@{/tags/{id}(id=${g.id()})}" th:text="${g.name()}">tag</a>
+							<form th:if="${ticket.editable()}" class="d-inline"
+								th:action="@{/tickets/{id}/tags/{tagId}/remove(id=${ticket.id()}, tagId=${g.id()})}" method="post">
+								<button class="btn btn-sm p-0 border-0 text-reset" type="submit"
+									th:attr="aria-label=|Retirer le tag ${g.name()}|"><i class="bi bi-x-lg"></i></button>
+							</form>
+						</span>
+					</div>
+					<form th:if="${ticket.editable() and !availableTags.isEmpty()}"
+						th:action="@{/tickets/{id}/tags(id=${ticket.id()})}" method="post">
+						<label class="form-label" for="tagId">Ajouter un tag</label>
+						<div class="input-group">
+							<select class="form-select" id="tagId" name="tagId" required>
+								<option th:each="g : ${availableTags}" th:value="${g.id()}" th:text="${g.name()}">Tag</option>
+							</select>
+							<button class="btn btn-primary" type="submit">Ajouter</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+</body>
+</html>

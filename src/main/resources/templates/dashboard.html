@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'dashboard', ~{::main})}">
+<head>
+	<title>Tableau de bord – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<div class="hp-eyebrow"><i class="bi bi-calendar3" aria-hidden="true"></i>
+				<span th:text="${#temporals.format(#temporals.createNow(), 'EEEE d MMMM yyyy')}">Aujourd'hui</span></div>
+			<h1>Tableau de bord</h1>
+			<div class="hp-subtitle">Activité du support, calculée sur les données réelles.</div>
+		</div>
+		<div class="hp-actions">
+			<a class="btn btn-outline-secondary" th:href="@{/tickets/board}"><i class="bi bi-kanban" aria-hidden="true"></i> Kanban</a>
+			<a class="btn btn-primary" th:href="@{/tickets/new}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nouveau ticket</a>
+		</div>
+	</div>
+
+	<div class="hp-bento">
+
+		<!-- Hero: distribution by status -->
+		<section class="hp-tile hp-tile-hero" aria-labelledby="t-status">
+			<div class="hp-tile-head">
+				<h2 id="t-status">Tickets par statut</h2>
+				<a th:href="@{/tickets}">Tout voir</a>
+			</div>
+			<th:block th:if="${dashboard.totalTickets() == 0}">
+				<div th:replace="~{fragments/components :: empty('bi-inbox', 'Aucun ticket pour le moment. Créez le premier pour voir apparaître les statistiques.')}"></div>
+			</th:block>
+			<div class="hp-donut-wrap" th:unless="${dashboard.totalTickets() == 0}">
+				<div class="hp-donut">
+					<svg viewBox="0 0 42 42" role="img"
+						th:attr="aria-label=|${dashboard.totalTickets()} tickets répartis par statut|">
+						<circle class="hp-donut-track" cx="21" cy="21" r="15.9155"/>
+						<circle th:each="seg : ${dashboard.statusSegments()}" class="hp-donut-seg"
+							th:classappend="'hp-seg-' + ${seg.status()}" cx="21" cy="21" r="15.9155" pathLength="100"
+							th:attr="stroke-dasharray=|${seg.percent() > 1.5 ? seg.percent() - 0.8 : seg.percent()} 100|,stroke-dashoffset=${-seg.offset()}"/>
+					</svg>
+					<div class="hp-donut-center">
+						<strong id="stat-total" th:text="${dashboard.totalTickets()}">0</strong>
+						<span>tickets</span>
+					</div>
+				</div>
+				<ul class="hp-legend">
+					<li th:each="s : ${statuses}">
+						<a th:href="@{/tickets(status=${s})}">
+							<i th:class="'hp-dot-' + ${s}" aria-hidden="true"></i>
+							<span th:text="#{'ticket.status.' + ${s}}">Statut</span>
+							<span class="count" th:text="${dashboard.count(s)}">0</span>
+							<span class="pct" th:text="${#numbers.formatDecimal(dashboard.count(s) * 100.0 / dashboard.totalTickets(), 1, 0)} + ' %'">0 %</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</section>
+
+		<!-- Stat tiles -->
+		<a class="hp-tile hp-tile-sm hp-tile-link hp-stat hp-accent-open" th:href="@{/tickets(status='OPEN')}">
+			<div class="hp-stat-top"><span>Ouverts</span><i class="bi bi-inbox" aria-hidden="true"></i></div>
+			<span class="hp-stat-value" id="stat-open" th:text="${dashboard.count(T(com.helpdeskpro.entity.TicketStatus).OPEN)}">0</span>
+			<div class="hp-stat-note">En attente de prise en charge</div>
+		</a>
+		<a class="hp-tile hp-tile-sm hp-tile-link hp-stat hp-accent-progress" th:href="@{/tickets(status='IN_PROGRESS')}">
+			<div class="hp-stat-top"><span>En cours</span><i class="bi bi-lightning-charge" aria-hidden="true"></i></div>
+			<span class="hp-stat-value" id="stat-in-progress" th:text="${dashboard.count(T(com.helpdeskpro.entity.TicketStatus).IN_PROGRESS)}">0</span>
+			<div class="hp-stat-note">Traités par un technicien</div>
+		</a>
+		<a class="hp-tile hp-tile-sm hp-tile-link hp-stat hp-accent-resolved" th:href="@{/tickets(status='RESOLVED')}">
+			<div class="hp-stat-top"><span>Résolus</span><i class="bi bi-check2-circle" aria-hidden="true"></i></div>
+			<span class="hp-stat-value" id="stat-resolved" th:text="${dashboard.count(T(com.helpdeskpro.entity.TicketStatus).RESOLVED)}">0</span>
+			<div class="hp-stat-note">Solution apportée</div>
+		</a>
+		<a class="hp-tile hp-tile-sm hp-tile-link hp-stat hp-accent-closed" th:href="@{/tickets(status='CLOSED')}">
+			<div class="hp-stat-top"><span>Clôturés</span><i class="bi bi-archive" aria-hidden="true"></i></div>
+			<span class="hp-stat-value" id="stat-closed" th:text="${dashboard.count(T(com.helpdeskpro.entity.TicketStatus).CLOSED)}">0</span>
+			<div class="hp-stat-note">Dossiers terminés</div>
+		</a>
+		<a class="hp-tile hp-tile-sm hp-tile-link hp-stat hp-accent-danger" th:href="@{/tickets(overdue=true)}">
+			<div class="hp-stat-top"><span>En retard</span><i class="bi bi-alarm" aria-hidden="true"></i></div>
+			<span class="hp-stat-value" id="stat-overdue" th:text="${dashboard.overdueTickets()}">0</span>
+			<div class="hp-stat-note">Échéance dépassée</div>
+		</a>
+		<a class="hp-tile hp-tile-sm hp-tile-link hp-stat hp-accent-violet" th:href="@{/technicians(active=true)}">
+			<div class="hp-stat-top"><span>Techniciens actifs</span><i class="bi bi-person-check" aria-hidden="true"></i></div>
+			<span class="hp-stat-value" id="stat-technicians" th:text="${dashboard.activeTechnicians()}">0</span>
+			<div class="hp-stat-note">Disponibles pour une affectation</div>
+		</a>
+
+		<!-- Priorities -->
+		<section class="hp-tile hp-tile-half" aria-labelledby="t-priority">
+			<div class="hp-tile-head">
+				<h2 id="t-priority">Répartition par priorité</h2>
+			</div>
+			<th:block th:if="${dashboard.totalTickets() == 0}">
+				<div th:replace="~{fragments/components :: empty('bi-flag', 'Les priorités des tickets apparaîtront ici.')}"></div>
+			</th:block>
+			<div class="hp-bars" th:unless="${dashboard.totalTickets() == 0}">
+				<div class="hp-bar-row" th:each="p : ${priorities}">
+					<a th:href="@{/tickets(priority=${p})}">
+						<span class="hp-bar-label"><i th:class="'hp-dot-' + ${p}" aria-hidden="true"></i>
+							<span th:text="#{'ticket.priority.' + ${p}}">Priorité</span></span>
+						<span class="hp-bar"><span th:class="'hp-fill-' + ${p}"
+							th:style="'width:' + ${dashboard.count(p) * 100 / dashboard.totalTickets()} + '%'"></span></span>
+						<span class="hp-bar-value" th:text="${dashboard.count(p)}">0</span>
+					</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- Deadlines -->
+		<section class="hp-tile hp-tile-half" aria-labelledby="t-sla">
+			<div class="hp-tile-head">
+				<h2 id="t-sla">Respect des échéances</h2>
+				<a th:href="@{/tickets(overdue=true)}" th:if="${dashboard.overdueTickets() > 0}">Voir les retards</a>
+			</div>
+			<th:block th:if="${dashboard.judgedTickets() == 0}">
+				<div th:replace="~{fragments/components :: empty('bi-hourglass-split', 'Aucun ticket résolu pour le moment : le respect des délais apparaîtra ici.')}"></div>
+			</th:block>
+			<div class="hp-sla" th:unless="${dashboard.judgedTickets() == 0}">
+				<div class="hp-ring">
+					<svg viewBox="0 0 42 42" role="img"
+						th:attr="aria-label=|${dashboard.onTimePercent()} pour cent des tickets résolus dans les délais|">
+						<circle class="track" cx="21" cy="21" r="15.9155"/>
+						<circle class="value" th:classappend="${dashboard.onTimePercent() < 50} ? 'is-poor'" cx="21" cy="21"
+							r="15.9155" pathLength="100" th:attr="stroke-dasharray=|${dashboard.onTimePercent()} 100|"/>
+					</svg>
+					<div class="hp-ring-center"><span id="stat-ontime" th:text="${dashboard.onTimePercent()} + ' %'">0 %</span></div>
+				</div>
+				<div class="hp-sla-text">
+					<p><strong th:text="${dashboard.resolvedWithinTarget()}">0</strong> ticket(s) résolu(s) dans les délais</p>
+					<p><strong th:text="${dashboard.resolvedOutsideTarget()}">0</strong> ticket(s) résolu(s) hors délai</p>
+					<p class="hp-muted small mb-0">Objectifs : critique 4 h, haute 24 h, moyenne 48 h, basse 72 h.</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Urgent -->
+		<section class="hp-tile hp-tile-half" aria-labelledby="t-urgent">
+			<div class="hp-tile-head">
+				<h2 id="t-urgent"><i class="bi bi-exclamation-octagon text-danger me-1" aria-hidden="true"></i>Interventions urgentes</h2>
+			</div>
+			<th:block th:if="${dashboard.urgentTickets().isEmpty()}">
+				<div th:replace="~{fragments/components :: empty('bi-shield-check', 'Rien d’urgent : aucun ticket en retard ni critique.')}"></div>
+			</th:block>
+			<ul class="hp-feed" th:unless="${dashboard.urgentTickets().isEmpty()}">
+				<li th:each="t : ${dashboard.urgentTickets()}">
+					<a th:href="@{/tickets/{id}(id=${t.id()})}">
+						<span class="title" th:text="${t.title()}">Titre</span>
+						<span class="meta">
+							<span th:replace="~{fragments/components :: priority(${t.priority()})}"></span>
+							<span th:replace="~{fragments/components :: status(${t.status()})}"></span>
+							<span>Échéance <span th:replace="~{fragments/components :: due(${t})}"></span></span>
+						</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<!-- Recent -->
+		<section class="hp-tile hp-tile-half" aria-labelledby="t-recent">
+			<div class="hp-tile-head">
+				<h2 id="t-recent"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>Incidents récents</h2>
+				<a th:href="@{/tickets}">Tous les tickets</a>
+			</div>
+			<th:block th:if="${dashboard.recentTickets().isEmpty()}">
+				<div th:replace="~{fragments/components :: empty('bi-inbox', 'Aucun incident enregistré.')}"></div>
+			</th:block>
+			<ul class="hp-feed" th:unless="${dashboard.recentTickets().isEmpty()}">
+				<li th:each="t : ${dashboard.recentTickets()}">
+					<a th:href="@{/tickets/{id}(id=${t.id()})}">
+						<span class="title" th:text="${t.title()}">Titre</span>
+						<span class="meta">
+							<span th:replace="~{fragments/components :: status(${t.status()})}"></span>
+							<span th:text="${t.requesterName()}">Demandeur</span>
+							<span th:text="${#temporals.format(t.createdAt(), 'dd/MM/yyyy HH:mm')}">date</span>
+						</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+	</div>
+</main>
+</body>
+</html>

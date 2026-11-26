@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'categories', ~{::main})}">
+<head>
+	<title th:text="${editing} ? 'Modifier la catégorie – HelpDesk Pro' : 'Nouvelle catégorie – HelpDesk Pro'">Catégorie</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<h1 th:text="${editing} ? 'Modifier la catégorie' : 'Nouvelle catégorie'">Catégorie</h1>
+	</div>
+	<div class="card">
+		<div class="card-body">
+			<form th:action="${editing} ? @{/categories/{id}/edit(id=${categoryId})} : @{/categories}" th:object="${form}"
+				method="post" novalidate>
+				<div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+					<div th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erreur</div>
+				</div>
+				<div class="row g-3">
+					<div class="col-12">
+						<label class="form-label hp-required" for="name">Nom</label>
+						<input class="form-control" id="name" th:field="*{name}" th:errorclass="is-invalid" maxlength="80">
+						<div class="invalid-feedback" th:errors="*{name}">Erreur</div>
+					</div>
+					<div class="col-12">
+						<label class="form-label" for="description">Description</label>
+						<textarea class="form-control" id="description" rows="3" th:field="*{description}"
+							th:errorclass="is-invalid"></textarea>
+						<div class="invalid-feedback" th:errors="*{description}">Erreur</div>
+					</div>
+				</div>
+				<div class="d-flex gap-2 mt-4">
+					<button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Enregistrer</button>
+					<a class="btn btn-outline-secondary"
+						th:href="${editing} ? @{/categories/{id}(id=${categoryId})} : @{/categories}">Annuler</a>
+				</div>
+			</form>
+		</div>
+	</div>
+</main>
+</body>
+</html>

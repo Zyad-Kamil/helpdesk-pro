@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'tickets', ~{::main})}">
+<head>
+	<title th:text="${editing} ? 'Modifier le ticket – HelpDesk Pro' : 'Nouveau ticket – HelpDesk Pro'">Ticket</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<h1 th:text="${editing} ? 'Modifier le ticket n°' + ${ticketId} : 'Nouveau ticket'">Ticket</h1>
+			<div class="hp-subtitle">Le statut, la solution, le technicien, la catégorie et les tags se gèrent depuis la page du ticket.</div>
+		</div>
+	</div>
+	<div class="card">
+		<div class="card-body">
+			<form th:action="${editing} ? @{/tickets/{id}/edit(id=${ticketId})} : @{/tickets}" th:object="${form}"
+				method="post" novalidate>
+				<div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+					<div th:each="e : ${#fields.globalErrors()}" th:text="${e}">Erreur</div>
+				</div>
+				<div class="row g-3">
+					<div class="col-12">
+						<label class="form-label hp-required" for="title">Titre</label>
+						<input class="form-control" id="title" th:field="*{title}" th:errorclass="is-invalid" maxlength="150">
+						<div class="invalid-feedback" th:errors="*{title}">Erreur</div>
+					</div>
+					<div class="col-12">
+						<label class="form-label hp-required" for="description">Description</label>
+						<textarea class="form-control" id="description" rows="6" th:field="*{description}"
+							th:errorclass="is-invalid"></textarea>
+						<div class="invalid-feedback" th:errors="*{description}">Erreur</div>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label hp-required" for="requesterName">Demandeur</label>
+						<input class="form-control" id="requesterName" th:field="*{requesterName}" th:errorclass="is-invalid"
+							maxlength="160">
+						<div class="invalid-feedback" th:errors="*{requesterName}">Erreur</div>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label hp-required" for="requesterEmail">E-mail du demandeur</label>
+						<input class="form-control" id="requesterEmail" type="email" th:field="*{requesterEmail}"
+							th:errorclass="is-invalid" maxlength="255">
+						<div class="invalid-feedback" th:errors="*{requesterEmail}">Erreur</div>
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="priority">Priorité</label>
+						<select class="form-select" id="priority" th:field="*{priority}" th:errorclass="is-invalid">
+							<option th:each="p : ${priorities}" th:value="${p}" th:text="#{'ticket.priority.' + ${p}}">Priorité</option>
+						</select>
+						<div class="form-text">Objectifs de résolution : basse 72 h, moyenne 48 h, haute 24 h, critique 4 h.</div>
+						<div class="invalid-feedback" th:errors="*{priority}">Erreur</div>
+					</div>
+				</div>
+				<div class="d-flex gap-2 mt-4">
+					<button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Enregistrer</button>
+					<a class="btn btn-outline-secondary"
+						th:href="${editing} ? @{/tickets/{id}(id=${ticketId})} : @{/tickets}">Annuler</a>
+				</div>
+			</form>
+		</div>
+	</div>
+</main>
+</body>
+</html>

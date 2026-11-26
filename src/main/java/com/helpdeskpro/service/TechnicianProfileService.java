@@ -59,8 +59,11 @@ public class TechnicianProfileService {
 		if (technician.getProfile() == null) {
 			throw new ResourceNotFoundException("Profil du technicien", technicianId);
 		}
+		// Explicit deletion: the profile must be deleted, never updated with a null technician
+		TechnicianProfile profile = technician.getProfile();
 		technician.removeProfile();
-		this.technicianRepository.flush();
+		this.profileRepository.delete(profile);
+		this.profileRepository.flush();
 	}
 
 	@Transactional(readOnly = true)

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'tags', ~{::main})}">
+<head>
+	<title th:text="|${tag.name()} – HelpDesk Pro|">Tag – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<nav aria-label="Fil d'Ariane" class="mb-2 small"><a th:href="@{/tags}">Tags</a></nav>
+	<div class="hp-page-header">
+		<h1><i class="bi bi-tag me-2"></i><span th:text="${tag.name()}">Tag</span></h1>
+		<div class="d-flex gap-2">
+			<a class="btn btn-outline-primary" th:href="@{/tags/{id}/edit(id=${tag.id()})}">
+				<i class="bi bi-pencil"></i> Modifier</a>
+			<form th:replace="~{fragments/components :: deleteForm(@{/tags/{id}/delete(id=${tag.id()})}, |Supprimer le tag « ${tag.name()} » ?|)}"></form>
+		</div>
+	</div>
+
+	<div class="card">
+		<div class="card-header">Tickets portant ce tag (<span th:text="${tickets.size()}">0</span>)</div>
+		<th:block th:if="${tickets.isEmpty()}">
+			<div th:replace="~{fragments/components :: empty('bi-ticket-perforated', 'Aucun ticket ne porte ce tag.')}"></div>
+		</th:block>
+		<div class="table-responsive" th:unless="${tickets.isEmpty()}">
+			<table class="table table-hover">
+				<thead><tr><th>N°</th><th>Titre</th><th>Statut</th><th>Priorité</th><th></th></tr></thead>
+				<tbody>
+					<tr th:each="t : ${tickets}">
+						<td class="hp-muted hp-mono" th:text="${t.id()}">1</td>
+						<td><a class="hp-row-link" th:href="@{/tickets/{id}(id=${t.id()})}" th:text="${t.title()}">Titre</a></td>
+						<td><span th:replace="~{fragments/components :: status(${t.status()})}"></span></td>
+						<td><span th:replace="~{fragments/components :: priority(${t.priority()})}"></span></td>
+						<td class="text-end">
+							<form th:if="${t.editable()}" class="d-inline"
+								th:action="@{/tags/{id}/tickets/{ticketId}/remove(id=${tag.id()}, ticketId=${t.id()})}"
+								method="post" th:attr="data-confirm=|Retirer ce tag du ticket n°${t.id()} ?|">
+								<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-x-lg"></i> Retirer</button>
+							</form>
+							<span class="small hp-muted" th:unless="${t.editable()}">ticket clôturé</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="card-body border-top">
+			<form th:if="${!assignableTickets.isEmpty()}" th:action="@{/tags/{id}/tickets(id=${tag.id()})}" method="post">
+				<label class="form-label" for="ticketId">Ajouter ce tag à un ticket</label>
+				<div class="input-group">
+					<select class="form-select" id="ticketId" name="ticketId" required>
+						<option th:each="t : ${assignableTickets}" th:value="${t.id()}"
+							th:text="|n°${t.id()} – ${t.title()}|">Ticket</option>
+					</select>
+					<button class="btn btn-primary" type="submit">Ajouter</button>
+				</div>
+			</form>
+			<p class="mb-0 hp-muted" th:if="${assignableTickets.isEmpty()}">Aucun ticket disponible à étiqueter.</p>
+		</div>
+	</div>
+</main>
+</body>
+</html>

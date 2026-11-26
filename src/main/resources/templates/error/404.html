@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, '', ~{::main})}">
+<head>
+	<title>Page introuvable – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="card">
+		<div class="card-body text-center py-5">
+			<div class="hp-error-code">404</div>
+			<h1 class="h3 mt-3">Page introuvable</h1>
+			<p class="hp-muted" th:text="${message} ?: 'La page demandée ou l’élément recherché n’existe pas.'">Message</p>
+			<a class="btn btn-primary" th:href="@{/}"><i class="bi bi-house"></i> Retour au tableau de bord</a>
+		</div>
+	</div>
+</main>
+</body>
+</html>

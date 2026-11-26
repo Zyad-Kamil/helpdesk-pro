@@ -1,23 +1,23 @@
 # État du projet
 
-Dernière mise à jour : 25/11/2026, mission 03.
+Dernière mise à jour : 25/11/2026, mission 04.1.
 
 ## Exigences du cahier des charges
 
 | Exigence | État |
 |---|---|
-| Spring Boot, MVC, Data JPA, Thymeleaf | Socle installé ; MVC et Thymeleaf pas encore utilisés |
+| Spring Boot, MVC, Data JPA, Thymeleaf | Implémenté : interface MVC complète |
 | H2 embarquée | Implémenté (fichier) |
 | H2 présente dans le repository | À faire : `data/demo/helpdesk.mv.db` |
 | Cinq entités JPA minimum | Implémenté |
 | OneToOne, OneToMany/ManyToOne, ManyToMany | Implémenté au niveau JPA, testé |
-| Association et dissociation graphiques 1-N et N-N | Logique de service implémentée et testée ; écrans à faire |
-| CRUD | Couche Service implémentée et testée ; écrans et API à faire |
-| Recherche | Couche Service implémentée et testée ; écrans et API à faire |
+| Association et dissociation graphiques 1-N et N-N | Implémenté et testé (tickets, technicien, catégorie, tags, depuis les deux côtés) |
+| CRUD | Implémenté et testé pour les cinq entités (écrans) ; API REST à faire |
+| Recherche | Implémenté et testé (écrans) |
 | Logique métier | Implémenté et testé (statuts, affectations, délais de résolution) |
 | API REST CRUD complète | À faire |
 | Tests Bruno | À faire |
-| Interface Bootstrap | À faire |
+| Interface Bootstrap | Implémenté : design system propriétaire, thèmes sombre et clair, responsive, accessible |
 | Commits réguliers de chaque membre | À faire : un seul commit à ce jour |
 
 ## Progression
@@ -28,6 +28,8 @@ Dernière mise à jour : 25/11/2026, mission 03.
 | 02 | Initialisation Spring Boot et modèle de données | Réalisée, en attente de validation |
 | 02.1 | Correction de régression H2 (2.5.252, CHECK rétablies) | Réalisée, en attente de validation |
 | 03 | Couche Service, DTO, règles métier, délais de résolution | Réalisée, en attente de validation |
+| 04 | Interface web Spring MVC, Thymeleaf et Bootstrap | Réalisée, en attente de validation |
+| 04.1 | Identité visuelle : design system, thèmes, Bento, Kanban, palette de commandes | Réalisée, en attente de validation |
 
 ## Décisions
 
@@ -43,6 +45,11 @@ Dernière mise à jour : 25/11/2026, mission 03.
 | Couche Service | Les services renvoient des DTO (jamais d'entité) construits dans la transaction ; messages d'erreur en français ; règles détaillées dans [architecture.md](architecture.md) |
 | Délais de résolution | LOW 72 h, MEDIUM 48 h, HIGH 24 h, CRITICAL 4 h, en heures calendaires ; horloge `Clock` injectable |
 | Interprétations à valider | Réaffectation refusée dès que le ticket est `RESOLVED` ; catégorie et tags modifiables sur un ticket résolu, pas sur un ticket clôturé ; activation d'un technicien toujours permise |
+| Interface web | Formulaires sans validation propre (le service valide) ; Post/Redirect/Get ; refus métier renvoyés à la page d'origine par l'en-tête `Referer` ; Bootstrap et Bootstrap Icons versionnés dans `static/vendor/` ; détails dans [architecture.md](architecture.md) |
+| Intervention urgente (tableau de bord) | Ticket ouvert ou en cours, en retard ou de priorité critique |
+| Identité visuelle | Palette Midnight, Slate, Electric Violet, Cyan, Cloud ; sombre par défaut, clair mémorisé dans `localStorage` ; JavaScript natif ; Bootstrap conservé comme fondation ; détails dans [architecture.md](architecture.md) |
+| Kanban | Boutons d'étape suivante (pas de glisser-déposer) passant par `TicketService` ; la résolution renvoie à la fiche pour saisir la solution |
+| Cache des ressources | URL versionnées par empreinte de contenu |
 
 Les choix de mapping sont détaillés dans [architecture.md](architecture.md).
 
@@ -59,8 +66,6 @@ Les choix de mapping sont détaillés dans [architecture.md](architecture.md).
 
 ## Tâches restantes
 
-1. Contrôleurs MVC et REST : traduction des exceptions métier en réponses HTTP (404, 409, 422) et en messages de formulaire.
-2. Écrans CRUD, recherche, association et dissociation, tableau de bord (tickets en retard).
-3. API REST et collection Bruno (les DTO existent).
-4. Base de démonstration versionnée, données fictives.
-5. Documentation finale.
+1. API REST (`controller.rest`), DTO déjà disponibles, et collection Bruno.
+2. Base de démonstration versionnée, données fictives (mission dédiée).
+3. Documentation finale.

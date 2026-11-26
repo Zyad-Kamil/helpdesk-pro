@@ -22,6 +22,26 @@ public record TicketResponse(Long id, String title, String description, String r
 		Boolean resolvedWithinTarget, Long technicianId, String technicianName, Long categoryId,
 		String categoryName, List<TagResponse> tags) {
 
+	/** The ticket can still be edited, categorized and tagged (only a closed ticket is frozen). */
+	public boolean editable() {
+		return this.status != TicketStatus.CLOSED;
+	}
+
+	/** A technician can be assigned or replaced while the ticket is open or in progress. */
+	public boolean technicianChangeable() {
+		return this.status == TicketStatus.OPEN || this.status == TicketStatus.IN_PROGRESS;
+	}
+
+	/** A technician can only be removed while the ticket is still open. */
+	public boolean technicianRemovable() {
+		return this.status == TicketStatus.OPEN && this.technicianId != null;
+	}
+
+	/** The only allowed next status, or {@code null}. */
+	public TicketStatus nextStatus() {
+		return this.status.next();
+	}
+
 	public static TicketResponse from(Ticket ticket, LocalDateTime dueAt, boolean overdue,
 			Boolean resolvedWithinTarget) {
 		return new TicketResponse(ticket.getId(), ticket.getTitle(), ticket.getDescription(),

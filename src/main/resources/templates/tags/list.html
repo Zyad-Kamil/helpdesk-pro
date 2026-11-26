@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'tags', ~{::main})}">
+<head>
+	<title>Tags – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<h1>Tags</h1>
+			<div class="hp-subtitle"><span th:text="${tags.size()}">0</span> tag(s)</div>
+		</div>
+		<a class="btn btn-primary" th:href="@{/tags/new}"><i class="bi bi-plus-lg"></i> Nouveau tag</a>
+	</div>
+	<form class="card hp-filters" th:action="@{/tags}" method="get">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-9">
+				<label class="form-label" for="keyword">Recherche</label>
+				<input class="form-control" id="keyword" name="keyword" th:value="${keyword}" placeholder="Nom du tag">
+			</div>
+			<div class="col-md-3 d-flex gap-2">
+				<button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+				<a class="btn btn-outline-secondary" th:href="@{/tags}">Réinitialiser</a>
+			</div>
+		</div>
+	</form>
+	<div class="card">
+		<th:block th:if="${tags.isEmpty()}">
+			<div th:replace="~{fragments/components :: empty('bi-tags', 'Aucun tag ne correspond à votre recherche.')}"></div>
+		</th:block>
+		<div class="table-responsive" th:unless="${tags.isEmpty()}">
+			<table class="table table-hover">
+				<thead><tr><th>Nom</th><th></th></tr></thead>
+				<tbody>
+					<tr th:each="g : ${tags}">
+						<td><a class="hp-row-link" th:href="@{/tags/{id}(id=${g.id()})}">
+							<i class="bi bi-tag me-1"></i><span th:text="${g.name()}">tag</span></a></td>
+						<td class="text-end text-nowrap">
+							<a class="btn btn-sm btn-outline-primary" th:href="@{/tags/{id}/edit(id=${g.id()})}">
+								<i class="bi bi-pencil"></i> Modifier</a>
+							<form th:replace="~{fragments/components :: deleteForm(@{/tags/{id}/delete(id=${g.id()})}, |Supprimer le tag « ${g.name()} » ?|)}"></form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</main>
+</body>
+</html>

@@ -17,14 +17,14 @@ flowchart TD
 
     browser -.-> mvc
     bruno -.-> rest
-    mvc -.-> service
+    mvc --> service
     rest -.-> service
     service --> repository
     repository --> entity
     repository --> db
 
     classDef todo stroke-dasharray: 5 5
-    class mvc,rest todo
+    class rest todo
 ```
 
 | Package `com.helpdeskpro` | Responsabilité | État |
@@ -35,10 +35,24 @@ flowchart TD
 | `service` | Règles métier et transactions | Implémenté |
 | `dto` | Requêtes validées (`*Request`) et réponses (`*Response`) | Implémenté |
 | `exception` | Exceptions métier | Implémenté (traduction HTTP à faire) |
-| `controller` | Contrôleurs MVC et vues | À développer |
+| `controller`, `controller.form` | Contrôleurs MVC, objets de formulaire, `WebAdvice` | Implémenté |
+| `templates`, `static` | Vues Thymeleaf, CSS, JS, Bootstrap local | Implémenté |
 | `controller.rest` | API REST | À développer |
 
 Les packages à développer contiennent seulement un `package-info.java` décrivant leur rôle.
+
+## Interface web
+
+Spring MVC et Thymeleaf, avec du JavaScript natif uniquement (`static/js/theme.js`, `static/js/helpdesk.js`), sans bibliothèque ni outil de build. Les contrôleurs n'appellent que les services : ni repository, ni entité.
+
+- **Pages.** Une page appelle `fragments/layout :: layout(titre, menu, contenu)` ; `fragments/components` fournit les messages flash, les badges de statut et de priorité (libellés dans `messages.properties`), l'échéance, les états vides et le formulaire de suppression.
+- **Formulaires.** `controller.form` contient des beans modifiables qui conservent la saisie. Aucune validation n'y est dupliquée : le service valide la requête, et `FormSupport` rattache chaque violation au champ du même nom (messages en français, locale fixée à `fr`). Un doublon est rattaché au champ `email` ou `name`.
+- **Post/Redirect/Get.** Toute modification est un `POST` suivi d'une redirection avec un message flash (`success` ou `error`). Aucun `GET` ne modifie de données.
+- **Erreurs.** `WebAdvice` traduit `ResourceNotFoundException` en page 404 ; `BusinessRuleException`, `DuplicateResourceException` et `ConstraintViolationException` renvoient à la page d'origine (en-tête `Referer`, même hôte uniquement, sinon `/`) avec un message explicite. Les pages `error/404` et `error/error` couvrent les autres cas.
+- **Actions proposées.** Les méthodes `editable()`, `technicianChangeable()`, `technicianRemovable()` et `nextStatus()` de `TicketResponse` (appuyées sur `TicketStatus.next()`) décident quels boutons sont affichés ; le service reste l'ultime garde.
+- **Tableau de bord.** `DashboardService` calcule tout à partir des tickets et techniciens réels. Une intervention urgente est un ticket ouvert ou en cours, en retard ou de priorité critique (cinq au plus, échéance la plus proche d'abord).
+- **Échappement.** Tout contenu utilisateur passe par `th:text` ou `th:field`, donc échappé.
+- **Ressources.** Bootstrap 5.3.3 et Bootstrap Icons 1.11.3 sont dans `static/vendor/` avec leurs licences MIT ; le CSS du projet est centralisé dans `static/css/helpdesk.css`.
 
 ## Couche Service
 
@@ -190,3 +204,20 @@ Contraintes d'unicité : `technician.email`, `category.name`, `tag.name`, `techn
 | Tests | Base H2 en mémoire ou fichier temporaire | `create-drop` (mémoire), `update` (fichier) |
 
 Le chemin est relatif : lancer l'application depuis la racine du projet. L'initialisation est décrite dans [data/README.md](../data/README.md).
+
+## Design system (mission 04.1)
+
+Bootstrap 5.3.3 reste la fondation technique ; toute l'apparence est redéfinie dans `static/css/helpdesk.css` (aucun CDN, fonctionnement hors ligne).
+
+- **Palette de marque.** Midnight `#0B1020`, Slate `#131C31`, Electric Violet `#7C5CFC`, Cyan `#22D3EE`, Cloud `#F8FAFC`. Le violet sert aux accents, aux icônes et aux fonds de boutons assombris (`#6C4CF4`) ; un violet éclairci (sombre) ou foncé (clair) sert au texte, pour garder un contraste AA.
+- **Jetons.** Variables CSS `--hp-*` : surfaces, bordures, texte, accent, ombres, espacements (`--hp-s1` à `--hp-s7`), rayons, durées. Couleurs sémantiques : succès, avertissement, danger, une couleur par statut (`--st-*`) et par priorité (`--pr-*`), chacune avec sa variante pour le texte (`-fg`).
+- **Thèmes.** Sombre par défaut, clair en option : l'attribut `data-bs-theme` de `<html>` pilote à la fois Bootstrap et les jetons. `theme.js`, chargé dans `<head>` avant les feuilles de style, applique le choix enregistré (`localStorage`, clé `hp-theme`) avant le premier affichage, sans clignotement. Si le stockage est bloqué, le choix dure le temps de la page.
+- **Menu.** Barre latérale propre (pas de `offcanvas-lg` : voir ci-dessous), tiroir sur petit écran avec fond, touche Échap et retour du focus. Lien d'évitement « Aller au contenu ».
+- **Palette de commandes.** `<dialog>` natif, ouvert par Ctrl+K (Cmd+K) ou par le bouton de la barre supérieure. Chaque entrée est une vraie route ; « Rechercher … dans les tickets » ouvre `/tickets?keyword=…` et un nombre ouvre `/tickets/{n}`. Navigation aux flèches, Entrée, Échap.
+- **Notifications.** Les messages flash sont rendus dans des éléments masqués `.hp-flash` puis transformés en toasts par `helpdesk.js` dans une région `aria-live` : `role="status"` et disparition après quelques secondes pour un succès, `role="alert"` et fermeture manuelle pour une erreur. Sans JavaScript, un bloc `<noscript>` affiche les messages.
+- **Tableau de bord.** Grille Bento CSS. Anneau par statut en SVG (segments calculés par `DashboardResponse.statusSegments()`), barres par priorité, anneau de respect des échéances (tickets résolus ou clôturés dans les délais, sinon état vide), listes d'interventions urgentes et d'incidents récents. Aucun chiffre n'est fixe.
+- **Fiche ticket.** Indicateur de cycle de vie en quatre étapes ; seules les dates réelles (création, résolution) y figurent.
+- **Kanban** (`/tickets/board`). Une colonne par statut, filtres de recherche, priorité, technicien et catégorie. Chaque carte n'offre que l'étape suivante autorisée (`TicketStatus.next()`), exécutée par `TicketService.changeStatus` ; la résolution, qui exige une solution, renvoie à la fiche. Après une action, retour au Kanban (paramètre `from=board`). Pas de glisser-déposer : les actions passent par des boutons, plus fiables et accessibles au clavier.
+- **Accessibilité.** Focus visible, `aria-current` sur la page active, libellés des boutons-icônes, graphiques SVG étiquetés, contrastes AA mesurés dans les deux thèmes sur quatorze pages, `prefers-reduced-motion` respecté (animations et transitions neutralisées).
+- **Cause du défaut visuel initial.** La classe Bootstrap `.offcanvas-lg` impose `background-color: transparent !important` et `width: auto !important` dès 992 px : le fond bleu nuit du menu disparaissait et son texte clair devenait illisible sur le fond clair. De plus `.card` est une colonne flex, ce qui empilait icône et valeur des tuiles. Le menu n'utilise plus `offcanvas-lg` et ses styles sont les siens.
+- **Cache.** `spring.web.resources.chain.strategy.content` ajoute l'empreinte du contenu aux URL des ressources statiques (`helpdesk-<hash>.css`) : un fichier modifié n'est jamais servi depuis un cache périmé.

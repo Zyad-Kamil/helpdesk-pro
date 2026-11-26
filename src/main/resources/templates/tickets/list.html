@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'tickets', ~{::main})}">
+<head>
+	<title>Tickets – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<h1>Tickets</h1>
+			<div class="hp-subtitle"><span th:text="${tickets.size()}">0</span> ticket(s) correspondant aux filtres</div>
+		</div>
+		<div class="hp-actions">
+			<div class="hp-segmented" role="group" aria-label="Mode d'affichage">
+				<a th:href="@{/tickets}" aria-current="page"><i class="bi bi-list-ul" aria-hidden="true"></i> Liste</a>
+				<a th:href="@{/tickets/board}"><i class="bi bi-kanban" aria-hidden="true"></i> Kanban</a>
+			</div>
+			<a class="btn btn-primary" th:href="@{/tickets/new}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nouveau ticket</a>
+		</div>
+	</div>
+
+	<form class="card hp-filters" th:action="@{/tickets}" method="get" role="search" aria-label="Filtrer les tickets">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-6 col-xl-3">
+				<label class="form-label" for="keyword">Recherche</label>
+				<input class="form-control" id="keyword" name="keyword" th:value="${criteria.keyword()}"
+					placeholder="Titre, description, demandeur…">
+			</div>
+			<div class="col-6 col-xl-2">
+				<label class="form-label" for="status">Statut</label>
+				<select class="form-select" id="status" name="status">
+					<option value="">Tous</option>
+					<option th:each="s : ${statuses}" th:value="${s}" th:text="#{'ticket.status.' + ${s}}"
+						th:selected="${s == criteria.status()}">Statut</option>
+				</select>
+			</div>
+			<div class="col-6 col-xl-2">
+				<label class="form-label" for="priority">Priorité</label>
+				<select class="form-select" id="priority" name="priority">
+					<option value="">Toutes</option>
+					<option th:each="p : ${priorities}" th:value="${p}" th:text="#{'ticket.priority.' + ${p}}"
+						th:selected="${p == criteria.priority()}">Priorité</option>
+				</select>
+			</div>
+			<div class="col-md-6 col-xl-2">
+				<label class="form-label" for="technicianId">Technicien</label>
+				<select class="form-select" id="technicianId" name="technicianId">
+					<option value="">Tous</option>
+					<option th:each="t : ${technicians}" th:value="${t.id()}"
+						th:text="${t.firstName() + ' ' + t.lastName()}"
+						th:selected="${t.id() == criteria.technicianId()}">Technicien</option>
+				</select>
+			</div>
+			<div class="col-md-6 col-xl-2">
+				<label class="form-label" for="categoryId">Catégorie</label>
+				<select class="form-select" id="categoryId" name="categoryId">
+					<option value="">Toutes</option>
+					<option th:each="c : ${categories}" th:value="${c.id()}" th:text="${c.name()}"
+						th:selected="${c.id() == criteria.categoryId()}">Catégorie</option>
+				</select>
+			</div>
+			<div class="col-md-6 col-xl-2">
+				<label class="form-label" for="tagId">Tag</label>
+				<select class="form-select" id="tagId" name="tagId">
+					<option value="">Tous</option>
+					<option th:each="g : ${tags}" th:value="${g.id()}" th:text="${g.name()}"
+						th:selected="${g.id() == criteria.tagId()}">Tag</option>
+				</select>
+			</div>
+			<div class="col-md-6 col-xl-3">
+				<div class="form-check mb-2">
+					<input class="form-check-input" type="checkbox" id="overdue" name="overdue" value="true"
+						th:checked="${criteria.overdue() == true}">
+					<label class="form-check-label" for="overdue">Uniquement les tickets en retard</label>
+				</div>
+			</div>
+			<div class="col-12 col-xl-auto d-flex gap-2">
+				<button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Filtrer</button>
+				<a class="btn btn-outline-secondary" th:href="@{/tickets}">Réinitialiser</a>
+			</div>
+		</div>
+	</form>
+
+	<div class="card">
+		<th:block th:if="${tickets.isEmpty()}"><div th:replace="~{fragments/components :: empty('bi-ticket-perforated', 'Aucun ticket ne correspond à votre recherche.')}"></div></th:block>
+		<div class="table-responsive" th:unless="${tickets.isEmpty()}">
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<th>N°</th><th>Titre</th><th>Statut</th><th>Priorité</th><th>Technicien</th><th>Catégorie</th>
+						<th>Échéance</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="t : ${tickets}">
+						<td class="hp-muted hp-mono" th:text="${t.id()}">1</td>
+						<td>
+							<a class="hp-row-link" th:href="@{/tickets/{id}(id=${t.id()})}" th:text="${t.title()}">Titre</a>
+							<div class="small hp-muted" th:text="${t.requesterName()}">Demandeur</div>
+						</td>
+						<td><span th:replace="~{fragments/components :: status(${t.status()})}"></span></td>
+						<td><span th:replace="~{fragments/components :: priority(${t.priority()})}"></span></td>
+						<td th:text="${t.technicianName() != null} ? ${t.technicianName()} : '—'">—</td>
+						<td th:text="${t.categoryName() != null} ? ${t.categoryName()} : '—'">—</td>
+						<td><span th:replace="~{fragments/components :: due(${t})}"></span></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</main>
+</body>
+</html>

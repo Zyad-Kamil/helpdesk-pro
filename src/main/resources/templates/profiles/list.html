@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'profiles', ~{::main})}">
+<head>
+	<title>Profils – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="hp-page-header">
+		<div>
+			<h1>Profils des techniciens</h1>
+			<div class="hp-subtitle"><span th:text="${profiles.size()}">0</span> profil(s). Un profil se crée depuis la fiche du technicien.</div>
+		</div>
+	</div>
+	<form class="card hp-filters" th:action="@{/profiles}" method="get">
+		<div class="row g-3 align-items-end">
+			<div class="col-md-9">
+				<label class="form-label" for="keyword">Recherche</label>
+				<input class="form-control" id="keyword" name="keyword" th:value="${keyword}"
+					placeholder="Spécialisation, nom ou e-mail du technicien">
+			</div>
+			<div class="col-md-3 d-flex gap-2">
+				<button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+				<a class="btn btn-outline-secondary" th:href="@{/profiles}">Réinitialiser</a>
+			</div>
+		</div>
+	</form>
+	<div class="card">
+		<th:block th:if="${profiles.isEmpty()}">
+			<div th:replace="~{fragments/components :: empty('bi-person-vcard', 'Aucun profil ne correspond à votre recherche.')}"></div>
+		</th:block>
+		<div class="table-responsive" th:unless="${profiles.isEmpty()}">
+			<table class="table table-hover">
+				<thead><tr><th>Technicien</th><th>Spécialisation</th><th>Téléphone</th><th>Biographie</th></tr></thead>
+				<tbody>
+					<tr th:each="p : ${profiles}">
+						<td><a class="hp-row-link" th:href="@{/technicians/{id}(id=${p.technicianId()})}"
+							th:text="${p.technicianName()}">Nom</a></td>
+						<td th:text="${p.specialization()} ?: '—'">—</td>
+						<td th:text="${p.phone()} ?: '—'">—</td>
+						<td class="text-truncate" style="max-width: 24rem" th:text="${p.biography()} ?: '—'">—</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, '', ~{::main})}">
+<head>
+	<title>Erreur – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<div class="card">
+		<div class="card-body text-center py-5">
+			<div class="hp-error-code" th:text="${status} ?: 'Erreur'">500</div>
+			<h1 class="h3 mt-3"
+				th:text="${status != null and status.toString().startsWith('4')} ? 'Requête invalide' : 'Une erreur est survenue'">Une erreur est survenue</h1>
+			<p class="hp-muted">La demande n'a pas pu être traitée. Vérifiez les informations saisies ou réessayez plus tard.</p>
+			<a class="btn btn-primary" th:href="@{/}"><i class="bi bi-house"></i> Retour au tableau de bord</a>
+		</div>
+	</div>
+</main>
+</body>
+</html>

@@ -7,3 +7,6 @@
 
 # H2 database files must never be altered by line-ending conversion
 *.mv.db binary
+
+# Vendored front-end libraries must stay byte-identical to their upstream release
+src/main/resources/static/vendor/** -text

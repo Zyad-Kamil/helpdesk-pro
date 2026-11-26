@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{fragments/layout :: layout(~{::title}, 'technicians', ~{::main})}">
+<head>
+	<title th:text="|${technician.firstName()} ${technician.lastName()} – HelpDesk Pro|">Technicien – HelpDesk Pro</title>
+</head>
+<body>
+<main>
+	<nav aria-label="Fil d'Ariane" class="mb-2 small"><a th:href="@{/technicians}">Techniciens</a></nav>
+	<div class="hp-page-header">
+		<div>
+			<h1 th:text="${technician.firstName() + ' ' + technician.lastName()}">Nom</h1>
+			<div class="mt-2">
+				<span class="hp-badge hp-ontime" th:if="${technician.active()}">Actif</span>
+				<span class="hp-badge hp-priority-LOW" th:unless="${technician.active()}">Inactif</span>
+				<span class="ms-2 hp-muted" th:text="${technician.email()}">e-mail</span>
+			</div>
+		</div>
+		<div class="d-flex flex-wrap gap-2">
+			<a class="btn btn-outline-primary" th:href="@{/technicians/{id}/edit(id=${technician.id()})}">
+				<i class="bi bi-pencil"></i> Modifier</a>
+			<form th:action="@{/technicians/{id}/active(id=${technician.id()})}" method="post"
+				th:attr="data-confirm=${technician.active()} ? 'Désactiver ce technicien ?' : 'Réactiver ce technicien ?'">
+				<input type="hidden" name="active" th:value="${!technician.active()}">
+				<button class="btn btn-outline-secondary" type="submit">
+					<i class="bi" th:classappend="${technician.active()} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+					<span th:text="${technician.active()} ? 'Désactiver' : 'Activer'">Désactiver</span></button>
+			</form>
+			<form th:replace="~{fragments/components :: deleteForm(@{/technicians/{id}/delete(id=${technician.id()})}, 'Supprimer ce technicien et son profil ? Cette action est irréversible.')}"></form>
+		</div>
+	</div>
+
+	<div class="row g-3">
+		<div class="col-xl-8">
+			<div class="card mb-3">
+				<div class="card-header">
+					<i class="bi bi-ticket-perforated me-2"></i>Tickets associés (<span th:text="${tickets.size()}">0</span>)
+				</div>
+				<th:block th:if="${tickets.isEmpty()}">
+					<div th:replace="~{fragments/components :: empty('bi-ticket-perforated', 'Aucun ticket affecté à ce technicien.')}"></div>
+				</th:block>
+				<div class="table-responsive" th:unless="${tickets.isEmpty()}">
+					<table class="table table-hover">
+						<thead><tr><th>N°</th><th>Titre</th><th>Statut</th><th>Priorité</th><th>Échéance</th><th></th></tr></thead>
+						<tbody>
+							<tr th:each="t : ${tickets}">
+								<td class="hp-muted hp-mono" th:text="${t.id()}">1</td>
+								<td><a class="hp-row-link" th:href="@{/tickets/{id}(id=${t.id()})}" th:text="${t.title()}">Titre</a></td>
+								<td><span th:replace="~{fragments/components :: status(${t.status()})}"></span></td>
+								<td><span th:replace="~{fragments/components :: priority(${t.priority()})}"></span></td>
+								<td><span th:replace="~{fragments/components :: due(${t})}"></span></td>
+								<td class="text-end">
+									<form th:if="${t.technicianRemovable()}" class="d-inline"
+										th:action="@{/technicians/{id}/tickets/{ticketId}/remove(id=${technician.id()}, ticketId=${t.id()})}"
+										method="post" th:attr="data-confirm=|Retirer le ticket n°${t.id()} de ce technicien ?|">
+										<button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-link-45deg"></i>
+											Désaffecter</button>
+									</form>
+									<span class="small hp-muted" th:unless="${t.technicianRemovable()}"
+										title="La désaffectation n'est possible que pour un ticket ouvert">non désaffectable</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="card-body border-top" th:if="${technician.active()}">
+					<form th:if="${!assignableTickets.isEmpty()}" th:action="@{/technicians/{id}/tickets(id=${technician.id()})}"
+						method="post">
+						<label class="form-label" for="ticketId">Affecter un ticket</label>
+						<div class="input-group">
+							<select class="form-select" id="ticketId" name="ticketId" required>
+								<option th:each="t : ${assignableTickets}" th:value="${t.id()}"
+									th:text="|n°${t.id()} – ${t.title()}|">Ticket</option>
+							</select>
+							<button class="btn btn-primary" type="submit">Affecter</button>
+						</div>
+					</form>
+					<p class="mb-0 hp-muted" th:if="${assignableTickets.isEmpty()}">Aucun ticket ouvert ou en cours à affecter.</p>
+				</div>
+				<div class="card-body border-top hp-muted" th:unless="${technician.active()}">
+					Un technicien inactif ne peut pas recevoir de nouvelle affectation.</div>
+			</div>
+		</div>
+
+		<div class="col-xl-4">
+			<div class="card">
+				<div class="card-header"><i class="bi bi-person-vcard me-2"></i>Profil</div>
+				<div class="card-body">
+					<th:block th:if="${technician.profile() == null}">
+						<p class="hp-muted">Aucun profil renseigné.</p>
+						<a class="btn btn-primary" th:href="@{/technicians/{id}/profile/new(id=${technician.id()})}">
+							<i class="bi bi-plus-lg"></i> Créer le profil</a>
+					</th:block>
+					<th:block th:if="${technician.profile() != null}">
+						<dl class="hp-dl mb-3">
+							<dt>Téléphone</dt>
+							<dd th:text="${technician.profile().phone()} ?: '—'">—</dd>
+							<dt>Spécialisation</dt>
+							<dd th:text="${technician.profile().specialization()} ?: '—'">—</dd>
+							<dt>Biographie</dt>
+							<dd class="hp-prewrap" th:text="${technician.profile().biography()} ?: '—'">—</dd>
+						</dl>
+						<div class="d-flex gap-2">
+							<a class="btn btn-sm btn-outline-primary"
+								th:href="@{/technicians/{id}/profile/edit(id=${technician.id()})}"><i class="bi bi-pencil"></i> Modifier</a>
+							<form th:replace="~{fragments/components :: deleteForm(@{/technicians/{id}/profile/delete(id=${technician.id()})}, 'Supprimer le profil de ce technicien ?')}"></form>
+						</div>
+					</th:block>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+</body>
+</html>
